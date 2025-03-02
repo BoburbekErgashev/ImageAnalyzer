@@ -54,8 +54,3 @@ if st.session_state.palette:
             <div style="width:50px; height:50px; background-color: rgb{color}; border-radius:10px;">
             </div>
             """, unsafe_allow_html=True)
-
-#os.makedirs(save_dir, exist_ok=True)
-#file_path = os.path.join(save_dir, uploaded_file.name)
-#with open(file_path, "wb") as f:
-#    f.write(uploaded_file.getbuffer())
