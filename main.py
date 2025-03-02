@@ -16,6 +16,15 @@ if "palette" not in st.session_state:
 if "palette_size" not in st.session_state:
     st.session_state.palette_size = None
 
+def generate_palette_image():
+    img = Image.new("RGB", (st.session_state.palette_size * 50, 50), "white")
+    draw = ImageDraw.Draw(img)
+    for a, colorinpalette in enumerate(st.session_state.palette):
+        x1 = a * 50
+        x2 = (a+1) * 50
+        draw.rectangle([x1, 0, x2, 50], fill=colorinpalette)
+        img.save("palettes/pal1.png", format="PNG")
+
 
 def get_colors():
     if st.session_state.uploaded_image is not None:
@@ -25,7 +34,7 @@ def get_colors():
             st.session_state.palette = process_image.get_palette(color_count=st.session_state.palette_size + 1)
         else:
             st.session_state.palette = process_image.get_palette(color_count=st.session_state.palette_size)
-
+    generate_palette_image()
 
 uploaded_file = st.file_uploader("Upload Image", type=supported_types)
 
