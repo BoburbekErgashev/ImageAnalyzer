@@ -4,15 +4,13 @@ from PIL import Image, ImageDraw
 import random, os, time, uuid
 
 supported_types = ["png", "jpg"]
-PALETTES_DIR = "palettes/"
-MAX_FILE_AGE = 600  # Delete files older than 10 minutes
+palettes_dir = "palettes/"
+max_file_age = 600
 
-os.makedirs(PALETTES_DIR, exist_ok=True)
+os.makedirs(palettes_dir, exist_ok=True)
 
-# Initialize session variables
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
-
 if "get_color_button_disabled" not in st.session_state:
     st.session_state.get_color_button_disabled = True
 if "uploaded_image" not in st.session_state:
@@ -30,52 +28,46 @@ if "download_button_disabled" not in st.session_state:
 
 
 def generate_palette_image():
-    """Generates an image of the color palette."""
     if st.session_state.random_filename:
-        old_file = os.path.join(PALETTES_DIR, f"{st.session_state.random_filename}.png")
+        old_file = os.path.join(palettes_dir, f"{st.session_state.random_filename}.png")
         if os.path.exists(old_file):
             os.remove(old_file)
 
-    # Generate a new unique filename
     while True:
         st.session_state.random_filename = f"{st.session_state.session_id}_{random.randint(100000, 999999)}"
-        file_path = os.path.join(PALETTES_DIR, f"{st.session_state.random_filename}.png")
+        file_path = os.path.join(palettes_dir, f"{st.session_state.random_filename}.png")
         if not os.path.exists(file_path):
             break
 
     img = Image.new("RGB", (st.session_state.palette_size * 16, 16), "white")
     draw = ImageDraw.Draw(img)
-    for a, colorp in enumerate(st.session_state.palette):
+    for a, color_s in enumerate(st.session_state.palette):
         x1, x2 = a * 16, (a + 1) * 16
-        draw.rectangle([x1, 0, x2, 16], fill=colorp)
+        draw.rectangle([x1, 0, x2, 16], fill=color_s)
 
     img.save(file_path, format="PNG")
     st.session_state.download_button_disabled = False
 
 
 def get_colors():
-    """Extracts colors from uploaded image."""
     if st.session_state.uploaded_image:
         process_image = ColorThief(st.session_state.uploaded_image)
         st.session_state.dominant_color = process_image.get_color(quality=1)
-        palette_size = max(4, st.session_state.palette_size)  # Ensure min size of 4
+        palette_size = max(4, st.session_state.palette_size)
         st.session_state.palette = process_image.get_palette(color_count=palette_size)
     generate_palette_image()
 
 
-def cleanup_old_files(directory=PALETTES_DIR, max_age=MAX_FILE_AGE):
-    """Deletes files older than max_age (in seconds)."""
+def cleanup_old_files():
     now = time.time()
-    for filename in os.listdir(directory):
-        file_path = os.path.join(directory, filename)
-        if os.path.isfile(file_path) and (now - os.path.getmtime(file_path)) > max_age:
-            os.remove(file_path)  # Delete old file
+    for filename in os.listdir(palettes_dir):
+        file_path = os.path.join(palettes_dir, filename)
+        if os.path.isfile(file_path) and (now - os.path.getmtime(file_path)) > max_file_age:
+            os.remove(file_path)
 
 
-# Run cleanup every time the app runs
 cleanup_old_files()
 
-# UI
 uploaded_file = st.file_uploader("Upload Image", type=supported_types)
 
 if uploaded_file:
@@ -109,8 +101,7 @@ if st.session_state.palette:
             unsafe_allow_html=True,
         )
 
-# Show download button only if the file exists
-palette_path = os.path.join(PALETTES_DIR, f"{st.session_state.random_filename}.png")
+palette_path = os.path.join(palettes_dir, f"{st.session_state.random_filename}.png")
 if os.path.exists(palette_path):
     with open(palette_path, "rb") as file:
         st.download_button(
