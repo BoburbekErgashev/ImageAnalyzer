@@ -1,13 +1,35 @@
+import firebase_admin
 import streamlit as st
 from colorthief import ColorThief
 from PIL import Image, ImageDraw
-import random, os, time, uuid
+import random, os, time, uuid, tomllib, json
+from firebase_admin import credentials, db
 
 supported_types = ["png", "jpg"]
 palettes_dir = "palettes/"
 max_file_age = 600
 
 os.makedirs(palettes_dir, exist_ok=True)
+
+if not os.path.exists("secretinfo/info.json"):
+    os.makedirs("secretinfo/", exist_ok=True)
+    with open(".streamlit/secrets.toml", "rb") as file:
+        config = tomllib.load(file)
+    json_data = json.dumps(config, indent=4)
+    with open("secretinfo/info.json", "w") as jsonfile:
+       jsonfile.write(json_data)
+
+with open("secretinfo/info.json", "r", encoding="utf-8") as jsonforauth:
+    secretdata = json.load(jsonforauth)
+database_url = secretdata["dataBase_url"]
+
+if not firebase_admin._apps:
+    cred = credentials.Certificate("secretinfo/info.json")
+    firebase_admin.initialize_app(cred, {
+        'databaseURL': database_url
+    })
+    open("auth.txt", "x")
+
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -25,6 +47,8 @@ if "random_filename" not in st.session_state:
     st.session_state.random_filename = None
 if "download_button_disabled" not in st.session_state:
     st.session_state.download_button_disabled = True
+if "counter_ref" not in st.session_state:
+    st.session_state.counter_ref = db.reference("/counter")
 
 
 def generate_palette_image():
@@ -55,6 +79,9 @@ def get_colors():
         st.session_state.dominant_color = process_image.get_color(quality=1)
         palette_size = max(4, st.session_state.palette_size)
         st.session_state.palette = process_image.get_palette(color_count=palette_size)
+    counter = st.session_state.counter_ref.get() or 0
+    counter += 1
+    st.session_state.counter_ref.set(counter)
     generate_palette_image()
 
 
@@ -110,3 +137,6 @@ if os.path.exists(palette_path):
             file_name=f"palette_{st.session_state.random_filename}.png",
             mime="image/png",
         )
+
+
+st.write(f"Number of generated images: {st.session_state.counter_ref.get()}")
