@@ -2,3 +2,4 @@ streamlit
 pillow
 colorthief
 firebase-admin
+python-telegram-bot
