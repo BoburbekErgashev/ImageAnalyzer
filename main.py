@@ -35,10 +35,12 @@ if not firebase_admin._apps:
 
 async def send_message():
     bot = Bot(token=token)
-    await bot.send_message(chat_id=chatid, text=f"Username:{st.session_state.username}\nComment:{st.session_state.comment}")
+    await bot.send_message(chat_id=chatid, text=f"Username:  {st.session_state.username}\nComment:  {st.session_state.comment}")
 
 def submit():
     asyncio.run(send_message())
+    st.toast("Thanks for feedback")
+    st.session_state.first_feedback = False
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
@@ -62,10 +64,9 @@ if "counter" not in st.session_state:
     st.session_state.counter = int
 if "enable_feedback" not in st.session_state:
     st.session_state.enable_feedback = False
-if "username" not in st.session_state:
-    st.session_state.username = str
-if "comment" not in st.session_state:
-    st.session_state.comment = str
+if "first_feedback" not in st.session_state:
+    st.session_state.first_feedback = True
+
 
 
 def generate_palette_image():
@@ -156,7 +157,8 @@ if os.path.exists(palette_path):
         st.markdown('</div>', unsafe_allow_html=True)
 
 if st.session_state.enable_feedback:
-    st.write("Leave Feedback")
-    st.session_state.username = st.text_input("Username", placeholder="Username")
-    st.session_state.comment = st.text_input("Comment", placeholder="Comment")
-    st.button("Submit", on_click=submit)
+    if st.session_state.first_feedback:
+        st.write("Leave Feedback")
+        st.session_state.username = st.text_input("Username", placeholder="Username")
+        st.session_state.comment = st.text_input("Comment", placeholder="Comment")
+        st.button("Submit", on_click=submit)
