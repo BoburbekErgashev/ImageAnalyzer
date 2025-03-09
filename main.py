@@ -38,9 +38,12 @@ async def send_message():
     await bot.send_message(chat_id=chatid, text=f"Username:  {st.session_state.username}\nComment:  {st.session_state.comment}")
 
 def submit():
-    asyncio.run(send_message())
-    st.toast("Thanks for feedback")
-    st.session_state.first_feedback = False
+    if st.session_state.username == "" or st.session_state.comment == "":
+        st.toast("Input fields cannot be empty")
+    else:
+        asyncio.run(send_message())
+        st.toast("Thanks for feedback")
+        st.session_state.first_feedback = False
 
 if "session_id" not in st.session_state:
     st.session_state.session_id = str(uuid.uuid4())
